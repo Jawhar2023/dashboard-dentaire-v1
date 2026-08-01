@@ -1,0 +1,42 @@
+{
+  "appId": "tn.clinique.khalil.dental.crm",
+  "productName": "Khalil Dental CRM",
+  "directories": {
+    "output": "release"
+  },
+  "files": [
+    "dist/**/*",
+    "electron/**/*",
+    "package.json"
+  ],
+  "asar": true,
+  "win": {
+    "target": [
+      {
+        "target": "nsis",
+        "arch": ["x64"]
+      },
+      {
+        "target": "portable",
+        "arch": ["x64"]
+      }
+    ],
+    "artifactName": "${productName}-${version}-${arch}.${ext}",
+    "signAndEditExecutable": false
+  },
+  "nsis": {
+    "oneClick": false,
+    "allowToChangeInstallationDirectory": true,
+    "createDesktopShortcut": true,
+    "createStartMenuShortcut": true,
+    "shortcutName": "Khalil Dental CRM"
+  },
+  "mac": {
+    "target": ["dmg"],
+    "category": "public.app-category.medical"
+  },
+  "linux": {
+    "target": ["AppImage"],
+    "category": "Office"
+  }
+}

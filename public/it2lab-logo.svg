@@ -1,0 +1,13 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 520 120" role="img" aria-label="IT2LAB">
+  <text
+    x="260"
+    y="82"
+    text-anchor="middle"
+    font-family="Arial Black, Arial, Helvetica, sans-serif"
+    font-size="92"
+    font-weight="900"
+    letter-spacing="2"
+  >
+    <tspan fill="#0B1F3A">IT</tspan><tspan fill="#00C2E8">2</tspan><tspan fill="#0B1F3A">LAB</tspan>
+  </text>
+</svg>

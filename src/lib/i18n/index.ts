@@ -1,0 +1,148 @@
+import i18n from "i18next"
+import { initReactI18next } from "react-i18next"
+
+const resources = {
+  fr: {
+    translation: {
+      nav: {
+        dashboard: "Tableau de bord",
+        patients: "Patients",
+        appointments: "Rendez-vous",
+        calendar: "Calendrier",
+        doctors: "Médecins",
+        treatments: "Traitements",
+        payments: "Paiements",
+        invoices: "Factures",
+        settings: "Paramètres",
+      },
+      welcome: {
+        morning: "Bonjour",
+        afternoon: "Bon après-midi",
+        evening: "Bonsoir",
+        overview: "Aperçu du jour",
+      },
+      common: {
+        search: "Rechercher patients, téléphone, traitement...",
+        newAppointment: "Nouveau rendez-vous",
+        save: "Enregistrer",
+        cancel: "Annuler",
+        send: "Envoyer",
+        edit: "Modifier",
+        delete: "Supprimer",
+        viewAll: "Voir tout",
+        loading: "Chargement...",
+        noResults: "Aucun résultat",
+        selectAll: "Tout sélectionner",
+        today: "Aujourd'hui",
+        tomorrow: "Demain",
+        thisWeek: "Cette semaine",
+      },
+      status: {
+        confirmed: "Confirmé",
+        arrived: "Arrivé",
+        waiting: "En attente",
+        completed: "Terminé",
+        cancelled: "Annulé",
+        treatment: "Traitement",
+        paid: "Payé",
+        partial: "Partiel",
+        unpaid: "Non payé",
+      },
+      reminder: {
+        template: "Bonjour {{name}},\n\nNous vous rappelons que votre rendez-vous est aujourd'hui à {{time}}.\n\nMerci d'arriver 10 minutes avant.\n\nCabinet Dr Ben Mustapha Khalil",
+        preview: "Aperçu",
+        sendNow: "Envoyer maintenant",
+        scheduleLater: "Programmer",
+        sending: "Envoi en cours...",
+      },
+      ai: {
+        title: "Assistant IA",
+        placeholder: "Posez une question...",
+        suggestions: {
+          arrivals: "Afficher les arrivées du jour",
+          unpaid: "Qui n'a pas payé ?",
+          invoice: "Générer une facture",
+          summary: "Résumer l'historique patient",
+          translateFr: "Traduire en français",
+          translateEn: "Traduire en anglais",
+        },
+      },
+    },
+  },
+  en: {
+    translation: {
+      nav: {
+        dashboard: "Dashboard",
+        patients: "Patients",
+        appointments: "Appointments",
+        calendar: "Calendar",
+        doctors: "Doctors",
+        treatments: "Treatments",
+        payments: "Payments",
+        invoices: "Invoices",
+        settings: "Settings",
+      },
+      welcome: {
+        morning: "Good Morning",
+        afternoon: "Good Afternoon",
+        evening: "Good Evening",
+        overview: "Today's Overview",
+      },
+      common: {
+        search: "Search patients, phone, treatment...",
+        newAppointment: "New Appointment",
+        save: "Save",
+        cancel: "Cancel",
+        send: "Send",
+        edit: "Edit",
+        delete: "Delete",
+        viewAll: "View all",
+        loading: "Loading...",
+        noResults: "No results",
+        selectAll: "Select all",
+        today: "Today",
+        tomorrow: "Tomorrow",
+        thisWeek: "This week",
+      },
+      status: {
+        confirmed: "Confirmed",
+        arrived: "Arrived",
+        waiting: "Waiting",
+        completed: "Completed",
+        cancelled: "Cancelled",
+        treatment: "Treatment",
+        paid: "Paid",
+        partial: "Partial",
+        unpaid: "Unpaid",
+      },
+      reminder: {
+        template: "Hello {{name}},\n\nThis is a reminder that your appointment is today at {{time}}.\n\nPlease arrive 10 minutes early.\n\nDr Ben Mustapha Khalil Clinic",
+        preview: "Preview",
+        sendNow: "Send Now",
+        scheduleLater: "Schedule Later",
+        sending: "Sending...",
+      },
+      ai: {
+        title: "AI Assistant",
+        placeholder: "Ask a question...",
+        suggestions: {
+          arrivals: "Show today's arrivals",
+          unpaid: "Who hasn't paid?",
+          invoice: "Generate invoice",
+          summary: "Summarize patient history",
+          translateFr: "Translate to French",
+          translateEn: "Translate to English",
+        },
+      },
+    },
+  },
+}
+
+i18n.use(initReactI18next).init({
+  resources,
+  lng: "fr",
+  fallbackLng: "en",
+  interpolation: { escapeValue: false },
+})
+
+export default i18n
