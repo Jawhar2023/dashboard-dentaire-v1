@@ -1,7 +1,6 @@
 import { useState } from "react"
 import { useParams, Link, useNavigate } from "react-router-dom"
-import { ArrowLeft, Phone, Mail, Pencil, Trash2, Copy, Eye, EyeOff, KeyRound, ExternalLink, Plus, ImageIcon, CreditCard } from "lucide-react"
-import { toast } from "sonner"
+import { ArrowLeft, Phone, Mail, Pencil, Trash2, Plus, ImageIcon, CreditCard } from "lucide-react"
 import { format } from "date-fns"
 import { PageTransition } from "@/components/shared/PageTransition"
 import { PatientAvatar } from "@/components/shared/PatientAvatar"
@@ -43,31 +42,12 @@ export default function PatientProfilePage() {
   const { data: allInvoices = [] } = useInvoices()
   const [editOpen, setEditOpen] = useState(false)
   const [deleteOpen, setDeleteOpen] = useState(false)
-  const [showPassword, setShowPassword] = useState(false)
   const [photoDialogOpen, setPhotoDialogOpen] = useState(false)
   const [editingPhoto, setEditingPhoto] = useState<BeforeAfterPhoto | null>(null)
   const [deletingPhoto, setDeletingPhoto] = useState<BeforeAfterPhoto | null>(null)
   const [paymentDialogOpen, setPaymentDialogOpen] = useState(false)
   const [editingPayment, setEditingPayment] = useState<Payment | null>(null)
   const [deletingPayment, setDeletingPayment] = useState<Payment | null>(null)
-
-  const copyPortalCredentials = async () => {
-    if (!patient?.portalUsername || !patient?.portalPassword) return
-    try {
-      const origin =
-        typeof window !== "undefined" && window.location.protocol !== "file:"
-          ? window.location.origin
-          : "http://localhost:5173"
-      const text = `Patient Portal
-URL: ${origin}/portal/login
-Username: ${patient.portalUsername}
-Password: ${patient.portalPassword}`
-      await navigator.clipboard.writeText(text)
-      toast.success("Portal credentials copied")
-    } catch {
-      toast.error("Could not copy — please copy manually")
-    }
-  }
 
   if (!patient) {
     return <div className="text-center py-16 text-muted-foreground">Patient not found</div>
@@ -142,55 +122,6 @@ Password: ${patient.portalPassword}`
           </div>
         </div>
       </Card>
-
-      {patient.portalUsername && patient.portalPassword && (
-        <Card className="mb-8 p-5 border-primary/20 bg-gradient-to-br from-primary/5 to-secondary/5">
-          <div className="flex flex-wrap items-start justify-between gap-4">
-            <div className="flex items-start gap-3">
-              <div className="rounded-xl bg-primary/10 p-2.5">
-                <KeyRound className="h-5 w-5 text-primary" />
-              </div>
-              <div>
-                <h3 className="font-semibold">Patient portal access</h3>
-                <p className="text-xs text-muted-foreground mt-0.5">
-                  Share these credentials — the patient can log in to view their treatments and payments.
-                </p>
-                <div className="mt-3 flex flex-wrap gap-x-6 gap-y-2 text-sm">
-                  <div>
-                    <p className="text-[10px] uppercase tracking-wide text-muted-foreground">Username</p>
-                    <p className="font-mono font-medium">{patient.portalUsername}</p>
-                  </div>
-                  <div>
-                    <p className="text-[10px] uppercase tracking-wide text-muted-foreground">Password</p>
-                    <div className="flex items-center gap-2">
-                      <p className="font-mono font-medium">
-                        {showPassword ? patient.portalPassword : "•".repeat(patient.portalPassword.length)}
-                      </p>
-                      <button
-                        type="button"
-                        className="text-muted-foreground hover:text-foreground"
-                        onClick={() => setShowPassword((s) => !s)}
-                      >
-                        {showPassword ? <EyeOff className="h-3.5 w-3.5" /> : <Eye className="h-3.5 w-3.5" />}
-                      </button>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </div>
-            <div className="flex gap-2">
-              <Button variant="outline" size="sm" className="rounded-xl gap-1.5" onClick={copyPortalCredentials}>
-                <Copy className="h-3.5 w-3.5" /> Copy
-              </Button>
-              <Button size="sm" className="rounded-xl gap-1.5" asChild>
-                <Link to="/portal/login">
-                  <ExternalLink className="h-3.5 w-3.5" /> Open portal
-                </Link>
-              </Button>
-            </div>
-          </div>
-        </Card>
-      )}
 
       {timeline.length > 0 && (
         <Card className="mb-8 p-6">

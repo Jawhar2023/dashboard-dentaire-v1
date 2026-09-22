@@ -1,7 +1,7 @@
 import { useState } from "react"
 import { Link } from "react-router-dom"
 import { useTranslation } from "react-i18next"
-import { Search, Plus } from "lucide-react"
+import { Search, Plus, CalendarClock } from "lucide-react"
 import { PageHeader } from "@/components/shared/PageHeader"
 import { PageTransition } from "@/components/shared/PageTransition"
 import { Input } from "@/components/ui/input"
@@ -10,13 +10,17 @@ import { Card } from "@/components/ui/card"
 import { PatientAvatar } from "@/components/shared/PatientAvatar"
 import { StatusBadge } from "@/components/shared/StatusBadge"
 import { NewPatientDialog } from "@/components/patients/PatientFormDialog"
-import { usePatients } from "@/hooks/useData"
+import { PatientsWithoutAppointmentPanel } from "@/components/patients/PatientsWithoutAppointmentPanel"
+import { usePatients, usePatientsWithoutAppointment } from "@/hooks/useData"
 import { getDoctor, getTreatment } from "@/lib/mockDataStore"
 import { getNationalityCode } from "@/lib/constants"
+import { cn } from "@/lib/utils"
 
 export default function PatientsPage() {
   const { t } = useTranslation()
   const { data: patientList = [], isLoading } = usePatients()
+  const { data: withoutAppointment = [] } = usePatientsWithoutAppointment()
+  const withoutAppointmentIds = new Set(withoutAppointment.map((p) => p.id))
   const [search, setSearch] = useState("")
   const [dialogOpen, setDialogOpen] = useState(false)
 
@@ -42,6 +46,8 @@ export default function PatientsPage() {
         }
       />
 
+      <PatientsWithoutAppointmentPanel patients={withoutAppointment} />
+
       <div className="relative mb-6 max-w-md">
         <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
         <Input
@@ -63,9 +69,15 @@ export default function PatientsPage() {
           {filtered.map((p) => {
             const doctor = p.doctorId ? getDoctor(p.doctorId) : null
             const treatment = p.treatmentId ? getTreatment(p.treatmentId) : null
+            const noAppointment = withoutAppointmentIds.has(p.id)
             return (
               <Link key={p.id} to={`/patients/${p.id}`}>
-                <Card className="p-5 transition-all duration-200 hover:shadow-card-hover hover:scale-[1.01]">
+                <Card
+                  className={cn(
+                    "p-5 transition-all duration-200 hover:shadow-card-hover hover:scale-[1.01]",
+                    noAppointment && "border-amber-300 dark:border-amber-800"
+                  )}
+                >
                   <div className="flex items-start gap-4">
                     <PatientAvatar
                       name={`${p.firstName} ${p.lastName}`}
@@ -81,8 +93,13 @@ export default function PatientsPage() {
                       <p className="text-xs text-muted-foreground mt-1">{p.nationality}</p>
                       {treatment && <p className="text-sm text-primary mt-2">{treatment.name}</p>}
                       {doctor && <p className="text-xs text-muted-foreground">{doctor.name}</p>}
-                      <div className="mt-3">
+                      <div className="mt-3 flex items-center gap-2">
                         <StatusBadge status={p.paymentStatus} />
+                        {noAppointment && (
+                          <span className="inline-flex items-center gap-1 rounded-full bg-amber-100 px-2 py-0.5 text-[11px] font-medium text-amber-800 dark:bg-amber-900/50 dark:text-amber-200">
+                            <CalendarClock className="h-3 w-3" /> Sans rendez-vous
+                          </span>
+                        )}
                       </div>
                     </div>
                   </div>

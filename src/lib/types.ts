@@ -72,8 +72,6 @@ export interface Patient {
   emergencyContact?: string
   visaNotes?: string
   notes?: string
-  portalUsername?: string
-  portalPassword?: string
 }
 
 export interface Appointment {
@@ -88,6 +86,8 @@ export interface Appointment {
   paymentStatus: PaymentStatus
   /** Amount already paid for this appointment (TND) */
   amountPaid?: number
+  /** Per-appointment override of the treatment's base price (TND) */
+  customPrice?: number
   reminderStatus: ReminderStatus
   arrivalStatus: ArrivalStatus
   notes?: string
@@ -101,6 +101,16 @@ export interface Appointment {
   autoReminder24h: boolean
   autoReminder3h: boolean
   autoReminder1h: boolean
+}
+
+export type RappelDesign = "rose" | "amber" | "emerald" | "sky" | "violet" | "slate"
+
+export interface RappelNote {
+  id: string
+  date: string
+  text: string
+  design: RappelDesign
+  createdAt: string
 }
 
 export interface Flight {
@@ -215,6 +225,7 @@ export interface Notification {
     | "payment_received"
     | "appointment_cancelled"
     | "doctor_unavailable"
+    | "patient_no_appointment"
   title: string
   message: string
   createdAt: string

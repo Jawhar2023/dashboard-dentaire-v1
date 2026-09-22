@@ -1,6 +1,6 @@
 import {
   LayoutDashboard, Users, CalendarClock, Calendar, Stethoscope, Sparkles,
-  CreditCard, FileText, Settings, Menu, X, Activity,
+  CreditCard, FileText, Settings, Menu, X, Activity, StickyNote, ClipboardList,
 } from "lucide-react"
 import { Link, useLocation } from "react-router-dom"
 import { useState } from "react"
@@ -15,8 +15,10 @@ const navItems = [
   { key: "calendar", icon: Calendar, path: "/calendar" },
   { key: "doctors", icon: Stethoscope, path: "/doctors" },
   { key: "treatments", icon: Sparkles, path: "/treatments" },
+  { key: "treatmentGlobale", icon: ClipboardList, path: "/treatment-globale" },
   { key: "payments", icon: CreditCard, path: "/payments" },
   { key: "invoices", icon: FileText, path: "/invoices" },
+  { key: "rappel", icon: StickyNote, path: "/rappel" },
   { key: "settings", icon: Settings, path: "/settings" },
 ]
 

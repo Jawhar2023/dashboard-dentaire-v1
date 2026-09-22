@@ -18,7 +18,7 @@ interface AppointmentPaymentCellProps {
   total: number
   paymentStatus: PaymentStatus
   amountPaid?: number
-  onChange: (data: { paymentStatus: PaymentStatus; amountPaid: number }) => void
+  onChange: (data: { paymentStatus: PaymentStatus; amountPaid: number; total?: number }) => void
   disabled?: boolean
 }
 
@@ -33,10 +33,15 @@ export function AppointmentPaymentCell({
   const paid = resolveAmountPaid(total, paymentStatus, amountPaid)
   const rest = Math.max(0, total - paid)
   const [draft, setDraft] = useState(String(paid))
+  const [totalDraft, setTotalDraft] = useState(String(total))
 
   useEffect(() => {
     setDraft(String(resolveAmountPaid(total, paymentStatus, amountPaid)))
   }, [total, paymentStatus, amountPaid])
+
+  useEffect(() => {
+    setTotalDraft(String(total))
+  }, [total])
 
   const commitPaid = (raw: string) => {
     const n = Number(raw)
@@ -48,6 +53,21 @@ export function AppointmentPaymentCell({
     onChange({
       amountPaid: nextPaid,
       paymentStatus: paymentStatusFromAmount(total, nextPaid),
+    })
+  }
+
+  const commitTotal = (raw: string) => {
+    const n = Number(raw)
+    if (Number.isNaN(n) || n < 0) {
+      setTotalDraft(String(total))
+      return
+    }
+    const nextTotal = Math.round(n)
+    const nextPaid = Math.min(paid, nextTotal)
+    onChange({
+      total: nextTotal,
+      amountPaid: nextPaid,
+      paymentStatus: paymentStatusFromAmount(nextTotal, nextPaid),
     })
   }
 
@@ -85,7 +105,22 @@ export function AppointmentPaymentCell({
       <div className="grid grid-cols-3 gap-1 text-[10px]">
         <div className="rounded-lg bg-muted/50 px-1.5 py-1">
           <p className="text-muted-foreground leading-none mb-0.5">Total</p>
-          <p className="font-semibold tabular-nums">{total}dt</p>
+          <Input
+            className="h-6 rounded-md border-0 bg-transparent p-0 text-xs font-semibold tabular-nums shadow-none focus-visible:ring-0"
+            type="number"
+            min={0}
+            value={totalDraft}
+            disabled={disabled}
+            onChange={(e) => setTotalDraft(e.target.value)}
+            onBlur={() => commitTotal(totalDraft)}
+            onKeyDown={(e) => {
+              if (e.key === "Enter") {
+                e.preventDefault()
+                commitTotal(totalDraft)
+                ;(e.target as HTMLInputElement).blur()
+              }
+            }}
+          />
         </div>
         <div className="rounded-lg bg-muted/50 px-1.5 py-1">
           <p className="text-muted-foreground leading-none mb-0.5">Payé</p>

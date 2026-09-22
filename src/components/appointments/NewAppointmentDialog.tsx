@@ -23,6 +23,7 @@ interface AppointmentFormDialogProps {
   open: boolean
   onOpenChange: (open: boolean) => void
   appointment?: Appointment
+  defaultPatientId?: string
 }
 
 interface FormData {
@@ -80,7 +81,7 @@ function emptyForm(): FormData {
   }
 }
 
-export function AppointmentFormDialog({ open, onOpenChange, appointment }: AppointmentFormDialogProps) {
+export function AppointmentFormDialog({ open, onOpenChange, appointment, defaultPatientId }: AppointmentFormDialogProps) {
   const isEdit = !!appointment
   const { t } = useTranslation()
   const { data: patientList = [] } = usePatients()
@@ -92,9 +93,13 @@ export function AppointmentFormDialog({ open, onOpenChange, appointment }: Appoi
 
   useEffect(() => {
     if (open) {
-      reset(appointment ? appointmentToForm(appointment) : emptyForm())
+      reset(
+        appointment
+          ? appointmentToForm(appointment)
+          : { ...emptyForm(), patientId: defaultPatientId ?? "" }
+      )
     }
-  }, [open, appointment, reset])
+  }, [open, appointment, defaultPatientId, reset])
 
   const patientId = watch("patientId")
   const doctorId = watch("doctorId")
@@ -250,3 +255,5 @@ export function AppointmentFormDialog({ open, onOpenChange, appointment }: Appoi
 export function NewAppointmentDialog(props: Omit<AppointmentFormDialogProps, "appointment">) {
   return <AppointmentFormDialog {...props} />
 }
+
+export type { AppointmentFormDialogProps }

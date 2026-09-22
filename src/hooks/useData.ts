@@ -26,8 +26,9 @@ import {
   treatmentCategories,
   addTreatmentCategory,
   searchAll,
-  notifications,
   markNotificationRead,
+  getNotifications,
+  getPatientsWithoutAppointment,
   addReminderLog,
   getAIResponse,
   flights,
@@ -69,6 +70,10 @@ import {
   updateClinicLogo,
   deleteClinicLogo,
   setDefaultClinicLogo,
+  getRappelNotes,
+  addRappelNote,
+  updateRappelNote,
+  deleteRappelNote,
 } from "@/lib/mockDataStore"
 import type {
   Appointment,
@@ -84,6 +89,7 @@ import type {
   Payment,
   ClinicLogo,
   ClinicSettings,
+  RappelNote,
 } from "@/lib/types"
 import type { QueryClient } from "@tanstack/react-query"
 
@@ -292,7 +298,14 @@ export function useDashboardStats() {
 export function useNotifications() {
   return useQuery({
     queryKey: ["notifications"],
-    queryFn: async () => { await delay(); return notifications },
+    queryFn: async () => { await delay(); return getNotifications() },
+  })
+}
+
+export function usePatientsWithoutAppointment() {
+  return useQuery({
+    queryKey: ["patients-without-appointment"],
+    queryFn: async () => { await delay(); return getPatientsWithoutAppointment() },
   })
 }
 
@@ -327,6 +340,8 @@ export function useCreateAppointment() {
     },
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ["appointments"] })
+      qc.invalidateQueries({ queryKey: ["notifications"] })
+      qc.invalidateQueries({ queryKey: ["patients-without-appointment"] })
       invalidateDashboard(qc)
     },
   })
@@ -343,6 +358,8 @@ export function useUpdateAppointment() {
     },
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ["appointments"] })
+      qc.invalidateQueries({ queryKey: ["notifications"] })
+      qc.invalidateQueries({ queryKey: ["patients-without-appointment"] })
       invalidateDashboard(qc)
     },
   })
@@ -358,6 +375,8 @@ export function useDeleteAppointment() {
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ["appointments"] })
       qc.invalidateQueries({ queryKey: ["reminder-logs"] })
+      qc.invalidateQueries({ queryKey: ["notifications"] })
+      qc.invalidateQueries({ queryKey: ["patients-without-appointment"] })
       invalidateDashboard(qc)
     },
   })
@@ -372,6 +391,8 @@ export function useCreatePatient() {
     },
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ["patients"] })
+      qc.invalidateQueries({ queryKey: ["notifications"] })
+      qc.invalidateQueries({ queryKey: ["patients-without-appointment"] })
       invalidateDashboard(qc)
     },
   })
@@ -404,6 +425,8 @@ export function useDeletePatient() {
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ["patients"] })
       qc.invalidateQueries({ queryKey: ["appointments"] })
+      qc.invalidateQueries({ queryKey: ["notifications"] })
+      qc.invalidateQueries({ queryKey: ["patients-without-appointment"] })
       invalidateDashboard(qc)
     },
   })
@@ -908,5 +931,47 @@ export function useSetDefaultClinicLogo() {
       qc.invalidateQueries({ queryKey: ["clinic-logos"] })
       qc.invalidateQueries({ queryKey: ["clinic-settings"] })
     },
+  })
+}
+
+export function useRappelNotes() {
+  return useQuery({
+    queryKey: ["rappel-notes"],
+    queryFn: async () => { await delay(); return getRappelNotes() },
+  })
+}
+
+export function useCreateRappelNote() {
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: async (data: Omit<RappelNote, "id" | "createdAt">) => {
+      await delay(150)
+      return addRappelNote(data)
+    },
+    onSuccess: () => qc.invalidateQueries({ queryKey: ["rappel-notes"] }),
+  })
+}
+
+export function useUpdateRappelNote() {
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: async ({ id, data }: { id: string; data: Partial<Omit<RappelNote, "id">> }) => {
+      await delay(150)
+      const updated = updateRappelNote(id, data)
+      if (!updated) throw new Error("Note not found")
+      return updated
+    },
+    onSuccess: () => qc.invalidateQueries({ queryKey: ["rappel-notes"] }),
+  })
+}
+
+export function useDeleteRappelNote() {
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: async (id: string) => {
+      await delay(150)
+      deleteRappelNote(id)
+    },
+    onSuccess: () => qc.invalidateQueries({ queryKey: ["rappel-notes"] }),
   })
 }

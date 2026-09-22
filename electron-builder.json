@@ -21,7 +21,6 @@
         "arch": ["x64"]
       }
     ],
-    "artifactName": "${productName}-${version}-${arch}.${ext}",
     "signAndEditExecutable": false
   },
   "nsis": {
@@ -29,7 +28,11 @@
     "allowToChangeInstallationDirectory": true,
     "createDesktopShortcut": true,
     "createStartMenuShortcut": true,
-    "shortcutName": "Khalil Dental CRM"
+    "shortcutName": "Khalil Dental CRM",
+    "artifactName": "${productName}-Setup-${version}-${arch}.${ext}"
+  },
+  "portable": {
+    "artifactName": "${productName}-Portable-${version}-${arch}.${ext}"
   },
   "mac": {
     "target": ["dmg"],

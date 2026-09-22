@@ -1,5 +1,5 @@
-import { format, addDays, subDays } from "date-fns"
-import { getNationalityFlag, getDicebearAvatar, DOCTOR_SPECIALTIES, TREATMENT_CATEGORIES } from "@/lib/constants"
+import { format, subDays } from "date-fns"
+import { getNationalityFlag, DOCTOR_SPECIALTIES, TREATMENT_CATEGORIES } from "@/lib/constants"
 import type {
   Patient,
   Doctor,
@@ -23,10 +23,33 @@ import type {
   BeforeAfterPhoto,
   ClinicSettings,
   ClinicLogo,
+  RappelNote,
 } from "./types"
 
-const today = format(new Date(), "yyyy-MM-dd")
-const tomorrow = format(addDays(new Date(), 1), "yyyy-MM-dd")
+function loadFromStorage<T>(key: string, fallback: T): T {
+  try {
+    if (typeof localStorage !== "undefined") {
+      const raw = localStorage.getItem(key)
+      if (raw) return JSON.parse(raw) as T
+    }
+  } catch {
+    // ignore corrupt storage
+  }
+  return fallback
+}
+
+function saveToStorage<T>(key: string, value: T) {
+  try {
+    if (typeof localStorage !== "undefined") {
+      localStorage.setItem(key, JSON.stringify(value))
+    }
+  } catch {
+    // ignore quota errors
+  }
+}
+
+const PATIENTS_KEY = "dashboard-patients"
+const APPOINTMENTS_KEY = "dashboard-appointments"
 
 export const currentUser: User = {
   id: "u1",
@@ -36,13 +59,7 @@ export const currentUser: User = {
   avatar: "https://api.dicebear.com/7.x/avataaars/svg?seed=Sarah",
 }
 
-export let doctors: Doctor[] = [
-  { id: "d1", name: "Dr. Ben Mustapha Khalil", specialty: "Implantologie", phone: "+216 71 000 001", available: true, avatar: getDicebearAvatar("Khalil") },
-  { id: "d2", name: "Dr. Amira Trabelsi", specialty: "Esthétique dentaire", phone: "+216 71 000 002", available: true, avatar: getDicebearAvatar("Amira") },
-  { id: "d3", name: "Dr. Youssef Mansouri", specialty: "Orthodontie", phone: "+216 71 000 003", available: false, avatar: getDicebearAvatar("Youssef") },
-  { id: "d4", name: "Dr. Leila Gharbi", specialty: "Endodontie", phone: "+216 71 000 004", available: true, avatar: getDicebearAvatar("Leila") },
-  { id: "d5", name: "Dr. Karim Bouazizi", specialty: "Chirurgie orale", phone: "+216 71 000 005", available: true, avatar: getDicebearAvatar("Karim") },
-]
+export let doctors: Doctor[] = []
 
 function uniqueSpecialties(...lists: string[][]) {
   const seen = new Set<string>()
@@ -74,16 +91,7 @@ export function addDoctorSpecialty(name: string) {
   return trimmed
 }
 
-export let treatments: Treatment[] = [
-  { id: "t1", name: "Root Canal", duration: 30, price: 450, category: "Endodontie" },
-  { id: "t2", name: "Implant Consultation", duration: 45, price: 150, category: "Implantologie" },
-  { id: "t3", name: "Dental Implant", duration: 90, price: 2500, category: "Implantologie" },
-  { id: "t4", name: "Teeth Whitening", duration: 60, price: 350, category: "Esthétique" },
-  { id: "t5", name: "Veneers", duration: 120, price: 1800, category: "Esthétique" },
-  { id: "t6", name: "Crown", duration: 60, price: 600, category: "Prothèse" },
-  { id: "t7", name: "Orthodontic Check", duration: 30, price: 100, category: "Orthodontie" },
-  { id: "t8", name: "Full Mouth Restoration", duration: 180, price: 8000, category: "Chirurgie" },
-]
+export let treatments: Treatment[] = []
 
 export let treatmentCategories: string[] = uniqueSpecialties(
   [...TREATMENT_CATEGORIES],
@@ -99,127 +107,33 @@ export function addTreatmentCategory(name: string) {
   return trimmed
 }
 
-export let drivers: Driver[] = [
-  { id: "dr1", name: "Ali Ben Salem", phone: "+216 98 111 222", vehicle: "Mercedes Vito", plateNumber: "123 TU 4567", available: true, avatar: "https://api.dicebear.com/7.x/avataaars/svg?seed=Ali" },
-  { id: "dr2", name: "Mohamed Haddad", phone: "+216 98 333 444", vehicle: "Toyota Hiace", plateNumber: "789 TU 1234", available: false, avatar: "https://api.dicebear.com/7.x/avataaars/svg?seed=Mohamed" },
-  { id: "dr3", name: "Sami Karray", phone: "+216 98 555 666", vehicle: "BMW X5", plateNumber: "456 TU 7890", available: true, avatar: "https://api.dicebear.com/7.x/avataaars/svg?seed=Sami" },
-]
+export let drivers: Driver[] = []
 
-export let hotels: Hotel[] = [
-  { id: "h1", name: "Marhaba Palace", roomNumber: "412", patientId: "p2", checkIn: today, checkOut: format(addDays(new Date(), 7), "yyyy-MM-dd"), breakfast: true, transportation: true, status: "checked_in" },
-  { id: "h2", name: "Mövenpick Gammarth", roomNumber: "305", patientId: "p4", checkIn: tomorrow, checkOut: format(addDays(new Date(), 10), "yyyy-MM-dd"), breakfast: true, transportation: true, status: "booked" },
-  { id: "h3", name: "Radisson Blu", roomNumber: "718", patientId: "p7", checkIn: subDays(new Date(), 2).toISOString().split("T")[0], checkOut: format(addDays(new Date(), 5), "yyyy-MM-dd"), breakfast: false, transportation: true, status: "checked_in" },
-]
+export let hotels: Hotel[] = []
 
-export let patients: Patient[] = [
-  { id: "p1", firstName: "Ahmed", lastName: "Ben Ali", phone: "+216 22 111 333", email: "ahmed@email.com", nationality: "Tunisia", nationalityFlag: "🇹🇳", passport: "TN123456", avatar: getDicebearAvatar("Ahmed"), paymentStatus: "paid", isInternational: false, doctorId: "d1", treatmentId: "t1", notes: "Allergie à la pénicilline", portalUsername: "ahmed.benali42", portalPassword: "Ahmed2026" },
-  { id: "p2", firstName: "Sarah", lastName: "Martin", phone: "+33 6 12 34 56 78", email: "sarah.martin@email.fr", nationality: "France", nationalityFlag: "🇫🇷", passport: "FR789012", avatar: getDicebearAvatar("SarahM"), arrival: today, departure: format(addDays(new Date(), 7), "yyyy-MM-dd"), hotelId: "h1", driverId: "dr1", doctorId: "d1", treatmentId: "t2", paymentStatus: "partial", isInternational: true, emergencyContact: "+33 6 99 88 77 66", visaNotes: "Visa touriste valide", portalUsername: "sarah.martin17", portalPassword: "Sarah2026" },
-  { id: "p3", firstName: "Marco", lastName: "Rossi", phone: "+39 333 444 5555", email: "marco@email.it", nationality: "Italy", nationalityFlag: "🇮🇹", passport: "IT345678", avatar: getDicebearAvatar("Marco"), arrival: tomorrow, paymentStatus: "unpaid", isInternational: true, doctorId: "d2", treatmentId: "t3" },
-  { id: "p4", firstName: "Emma", lastName: "Wilson", phone: "+44 7700 900123", email: "emma@email.co.uk", nationality: "UK", nationalityFlag: "🇬🇧", passport: "GB901234", avatar: getDicebearAvatar("Emma"), arrival: tomorrow, hotelId: "h2", driverId: "dr3", paymentStatus: "partial", isInternational: true, doctorId: "d1", treatmentId: "t8" },
-  { id: "p5", firstName: "Fatma", lastName: "Trabelsi", phone: "+216 98 765 432", email: "fatma@email.tn", nationality: "Tunisia", nationalityFlag: "🇹🇳", avatar: getDicebearAvatar("Fatma"), paymentStatus: "paid", isInternational: false, doctorId: "d4", treatmentId: "t1" },
-  { id: "p6", firstName: "Hans", lastName: "Mueller", phone: "+49 170 1234567", email: "hans@email.de", nationality: "Germany", nationalityFlag: "🇩🇪", passport: "DE567890", avatar: getDicebearAvatar("Hans"), paymentStatus: "paid", isInternational: true, doctorId: "d2", treatmentId: "t4" },
-  { id: "p7", firstName: "Layla", lastName: "Al-Rashid", phone: "+971 50 123 4567", email: "layla@email.ae", nationality: "UAE", nationalityFlag: "🇦🇪", passport: "AE234567", avatar: getDicebearAvatar("Layla"), arrival: subDays(new Date(), 2).toISOString().split("T")[0], hotelId: "h3", driverId: "dr1", paymentStatus: "paid", isInternational: true, doctorId: "d1", treatmentId: "t5" },
-  { id: "p8", firstName: "Pierre", lastName: "Dubois", phone: "+33 6 55 44 33 22", email: "pierre@email.fr", nationality: "France", nationalityFlag: "🇫🇷", passport: "FR456789", avatar: getDicebearAvatar("Pierre"), paymentStatus: "unpaid", isInternational: true, doctorId: "d3", treatmentId: "t7" },
-  { id: "p9", firstName: "Yasmine", lastName: "Bouazizi", phone: "+216 55 666 777", email: "yasmine@email.tn", nationality: "Tunisia", nationalityFlag: "🇹🇳", avatar: getDicebearAvatar("Yasmine"), paymentStatus: "paid", isInternational: false, doctorId: "d2", treatmentId: "t4" },
-  { id: "p10", firstName: "James", lastName: "Thompson", phone: "+1 555 123 4567", email: "james@email.com", nationality: "USA", nationalityFlag: "🇺🇸", passport: "US678901", avatar: getDicebearAvatar("James"), paymentStatus: "partial", isInternational: true, doctorId: "d5", treatmentId: "t8" },
-  { id: "p11", firstName: "Sofia", lastName: "Garcia", phone: "+34 612 345 678", email: "sofia@email.es", nationality: "Spain", nationalityFlag: "🇪🇸", passport: "ES123789", avatar: getDicebearAvatar("Sofia"), paymentStatus: "unpaid", isInternational: true, doctorId: "d1", treatmentId: "t3" },
-  { id: "p12", firstName: "Karim", lastName: "Jebali", phone: "+216 22 888 999", email: "karim@email.tn", nationality: "Tunisia", nationalityFlag: "🇹🇳", avatar: getDicebearAvatar("Karim"), paymentStatus: "paid", isInternational: false, doctorId: "d4", treatmentId: "t6" },
-  { id: "p13", firstName: "Anna", lastName: "Kowalski", phone: "+48 501 234 567", email: "anna@email.pl", nationality: "Poland", nationalityFlag: "🇵🇱", passport: "PL890123", avatar: getDicebearAvatar("Anna"), paymentStatus: "partial", isInternational: true, doctorId: "d2", treatmentId: "t5" },
-  { id: "p14", firstName: "Mohamed", lastName: "Saidi", phone: "+216 99 111 222", email: "mohamed@email.tn", nationality: "Tunisia", nationalityFlag: "🇹🇳", avatar: getDicebearAvatar("MohamedS"), paymentStatus: "paid", isInternational: false, doctorId: "d3", treatmentId: "t7" },
-  { id: "p15", firstName: "Claire", lastName: "Bernard", phone: "+33 6 77 88 99 00", email: "claire@email.fr", nationality: "France", nationalityFlag: "🇫🇷", passport: "FR234890", avatar: getDicebearAvatar("Claire"), paymentStatus: "unpaid", isInternational: true, doctorId: "d1", treatmentId: "t2" },
-]
+const seedPatients: Patient[] = []
 
-const times = ["08:00", "08:30", "09:00", "09:30", "10:00", "10:30", "11:00", "11:30", "14:00", "14:30", "15:00", "15:30", "16:00", "16:30", "17:00"]
-const statuses: Appointment["status"][] = ["confirmed", "waiting", "arrived", "treatment", "completed", "cancelled"]
+export let patients: Patient[] = loadFromStorage(PATIENTS_KEY, seedPatients)
+function persistPatients() {
+  saveToStorage(PATIENTS_KEY, patients)
+}
 
-export let appointments: Appointment[] = Array.from({ length: 18 }, (_, i) => {
-  const patient = patients[i % patients.length]
-  const doctor = doctors[i % doctors.length]
-  const treatment = treatments[i % treatments.length]
-  const status = statuses[i % statuses.length]
-  const paymentStatus = patient.paymentStatus
-  const amountPaid =
-    paymentStatus === "paid"
-      ? treatment.price
-      : paymentStatus === "partial"
-        ? Math.round(treatment.price * 0.3)
-        : 0
-  return {
-    id: `a${i + 1}`,
-    patientId: patient.id,
-    doctorId: doctor.id,
-    treatmentId: treatment.id,
-    date: i < 14 ? today : tomorrow,
-    time: times[i % times.length],
-    duration: treatment.duration,
-    status,
-    paymentStatus,
-    amountPaid,
-    reminderStatus: i % 4 === 0 ? "delivered" : i % 4 === 1 ? "read" : i % 4 === 2 ? "pending" : "none",
-    arrivalStatus: patient.isInternational ? (i % 3 === 0 ? "arrived" : i % 3 === 1 ? "in_transit" : "not_arrived") : "arrived",
-    notes: i % 3 === 0 ? "Patient VIP - accueil spécial" : undefined,
-    hotelId: patient.hotelId,
-    driverId: patient.driverId,
-    flightId: patient.isInternational ? `f${(i % 5) + 1}` : undefined,
-    airportPickupIncluded: patient.isInternational && i % 2 === 0,
-    smsReminder: true,
-    whatsappReminder: true,
-    emailReminder: patient.isInternational,
-    autoReminder24h: true,
-    autoReminder3h: true,
-    autoReminder1h: true,
-  }
-})
+const seedAppointments: Appointment[] = []
 
-export let flights: Flight[] = [
-  { id: "f1", patientId: "p2", flightNumber: "AF 1234", airline: "Air France", arrivalTime: `${today}T10:30:00`, terminal: "T1", isReturn: false, status: "landed" },
-  { id: "f2", patientId: "p4", flightNumber: "BA 567", airline: "British Airways", arrivalTime: `${tomorrow}T14:15:00`, terminal: "T2", isReturn: false, status: "scheduled" },
-  { id: "f3", patientId: "p3", flightNumber: "AZ 890", airline: "ITA Airways", arrivalTime: `${tomorrow}T09:00:00`, terminal: "T1", isReturn: false, status: "scheduled" },
-  { id: "f4", patientId: "p7", flightNumber: "EK 701", airline: "Emirates", arrivalTime: `${subDays(new Date(), 2).toISOString().split("T")[0]}T16:00:00`, terminal: "T1", isReturn: false, status: "landed" },
-  { id: "f5", patientId: "p2", flightNumber: "AF 5678", airline: "Air France", arrivalTime: `${format(addDays(new Date(), 7), "yyyy-MM-dd")}T18:00:00`, terminal: "T1", isReturn: true, status: "scheduled" },
-]
+export let appointments: Appointment[] = loadFromStorage(APPOINTMENTS_KEY, seedAppointments)
+function persistAppointments() {
+  saveToStorage(APPOINTMENTS_KEY, appointments)
+}
 
-export let airportTransfers: AirportTransfer[] = [
-  { id: "at1", patientId: "p2", flightId: "f1", driverId: "dr1", pickupTime: `${today}T10:45:00`, terminal: "T1", status: "completed", type: "pickup" },
-  { id: "at2", patientId: "p4", flightId: "f2", driverId: "dr3", pickupTime: `${tomorrow}T14:30:00`, terminal: "T2", status: "scheduled", type: "pickup" },
-  { id: "at3", patientId: "p3", flightId: "f3", driverId: "dr1", pickupTime: `${tomorrow}T09:15:00`, terminal: "T1", status: "scheduled", type: "pickup" },
-  { id: "at4", patientId: "p7", flightId: "f4", driverId: "dr1", pickupTime: `${subDays(new Date(), 2).toISOString().split("T")[0]}T16:30:00`, terminal: "T1", status: "completed", type: "pickup" },
-]
+export let flights: Flight[] = []
 
-export let invoices: Invoice[] = patients.slice(0, 10).map((p, i) => {
-  const treatment = treatments[i % treatments.length]
-  const deposit = Math.round(treatment.price * 0.3)
-  const paid = p.paymentStatus === "paid" ? treatment.price : p.paymentStatus === "partial" ? deposit : 0
-  return {
-    id: `inv${i + 1}`,
-    patientId: p.id,
-    treatmentCost: treatment.price,
-    deposit,
-    remainingBalance: treatment.price - paid,
-    paid,
-    status: p.paymentStatus,
-    createdAt: subDays(new Date(), i).toISOString(),
-    items: [{ name: treatment.name, amount: treatment.price }],
-  }
-})
+export let airportTransfers: AirportTransfer[] = []
 
-export let payments: Payment[] = invoices.filter((inv) => inv.paid > 0).map((inv, i) => ({
-  id: `pay${i + 1}`,
-  patientId: inv.patientId,
-  invoiceId: inv.id,
-  amount: inv.paid,
-  method: (["card", "cash", "transfer", "paypal"] as const)[i % 4],
-  date: inv.createdAt,
-  status: "completed" as const,
-}))
+export let invoices: Invoice[] = []
 
-export const messages: Message[] = [
-  { id: "m1", patientId: "p2", channel: "whatsapp", content: "Bonjour, je confirme mon RDV de demain.", sentAt: subDays(new Date(), 1).toISOString(), status: "read", direction: "inbound" },
-  { id: "m2", patientId: "p2", channel: "whatsapp", content: "Rappel: RDV demain à 08:30. Merci d'arriver 10 min avant.", sentAt: subDays(new Date(), 1).toISOString(), status: "delivered", direction: "outbound" },
-  { id: "m3", patientId: "p4", channel: "sms", content: "Votre transfert aéroport est confirmé.", sentAt: new Date().toISOString(), status: "delivered", direction: "outbound" },
-  { id: "m4", patientId: "p6", channel: "email", content: "Devis pour blanchiment dentaire joint.", sentAt: subDays(new Date(), 2).toISOString(), status: "read", direction: "outbound" },
-  { id: "m5", patientId: "p10", channel: "whatsapp", content: "Question sur le plan de traitement.", sentAt: new Date().toISOString(), status: "pending", direction: "inbound" },
-]
+export let payments: Payment[] = []
+
+export const messages: Message[] = []
 
 export let reminderLogs: ReminderLog[] = appointments.slice(0, 8).map((a, i) => ({
   id: `rl${i + 1}`,
@@ -246,30 +160,28 @@ export let tourismCases: MedicalTourismCase[] = patients.filter((p) => p.isInter
   quoteAmount: treatments.find((t) => t.id === p.treatmentId)?.price ?? 500,
 }))
 
-export let notifications: Notification[] = [
-  { id: "n1", type: "patient_arriving", title: "Patient arriving soon", message: "Sarah Martin arrives in 30 minutes", createdAt: new Date().toISOString(), read: false, link: "/patients/p2" },
-  { id: "n2", type: "reminder_failed", title: "Reminder failed", message: "SMS to Pierre Dubois could not be delivered", createdAt: subDays(new Date(), 0).toISOString(), read: false, link: "/appointments" },
-  { id: "n3", type: "payment_received", title: "Payment received", message: "Advance payment from Sarah Martin", createdAt: new Date().toISOString(), read: true, link: "/payments" },
-  { id: "n4", type: "payment_received", title: "Payment received", message: "2,500 TND from Layla Al-Rashid", createdAt: subDays(new Date(), 1).toISOString(), read: true, link: "/payments" },
-  { id: "n5", type: "appointment_cancelled", title: "Appointment cancelled", message: "Marco Rossi cancelled tomorrow's visit", createdAt: new Date().toISOString(), read: false, link: "/appointments" },
-  { id: "n6", type: "doctor_unavailable", title: "Doctor unavailable", message: "Dr. Youssef Mansouri is on leave today", createdAt: new Date().toISOString(), read: false, link: "/doctors" },
-]
+export let notifications: Notification[] = []
 
-export const patientTimelines: PatientTimelineEvent[] = [
-  { id: "pt1", patientId: "p2", type: "created", label: "Appointment Created", date: subDays(new Date(), 14).toISOString(), completed: true },
-  { id: "pt2", patientId: "p2", type: "reminder", label: "Reminder Sent", date: subDays(new Date(), 1).toISOString(), completed: true },
-  { id: "pt3", patientId: "p2", type: "confirmed", label: "Confirmed", date: subDays(new Date(), 7).toISOString(), completed: true },
-  { id: "pt4", patientId: "p2", type: "arrived", label: "Arrived", date: today, completed: true },
-  { id: "pt5", patientId: "p2", type: "treatment_started", label: "Treatment Started", date: today, completed: false },
-  { id: "pt6", patientId: "p2", type: "treatment_finished", label: "Treatment Finished", date: "", completed: false },
-  { id: "pt7", patientId: "p2", type: "payment", label: "Payment Completed", date: "", completed: false },
-  { id: "pt8", patientId: "p2", type: "review", label: "Review Received", date: "", completed: false },
-]
+export function getPatientsWithoutAppointment() {
+  return patients.filter((p) => !appointments.some((a) => a.patientId === p.id))
+}
 
-export let beforeAfterPhotos: BeforeAfterPhoto[] = [
-  { id: "ba1", patientId: "p7", beforeUrl: "https://api.dicebear.com/7.x/shapes/svg?seed=before1", afterUrl: "https://api.dicebear.com/7.x/shapes/svg?seed=after1", treatment: "Veneers", date: subDays(new Date(), 5).toISOString() },
-  { id: "ba2", patientId: "p6", beforeUrl: "https://api.dicebear.com/7.x/shapes/svg?seed=before2", afterUrl: "https://api.dicebear.com/7.x/shapes/svg?seed=after2", treatment: "Teeth Whitening", date: subDays(new Date(), 10).toISOString() },
-]
+export function getNotifications(): Notification[] {
+  const missingAppointment: Notification[] = getPatientsWithoutAppointment().map((p) => ({
+    id: `no-appt-${p.id}`,
+    type: "patient_no_appointment",
+    title: "Patient sans rendez-vous",
+    message: `${p.firstName} ${p.lastName} (${p.phone}) n'a pas encore de rendez-vous`,
+    createdAt: p.arrival ?? new Date().toISOString(),
+    read: false,
+    link: `/patients/${p.id}`,
+  }))
+  return [...missingAppointment, ...notifications]
+}
+
+export const patientTimelines: PatientTimelineEvent[] = []
+
+export let beforeAfterPhotos: BeforeAfterPhoto[] = []
 
 export function getDashboardStats(): DashboardStats {
   const todayStr = format(new Date(), "yyyy-MM-dd")
@@ -407,33 +319,6 @@ export function getAnalyticsData(): AnalyticsData {
   }
 }
 
-export function generatePortalUsername(firstName: string, lastName: string) {
-  const base = `${firstName}.${lastName}`
-    .toLowerCase()
-    .normalize("NFD")
-    .replace(/[\u0300-\u036f]/g, "")
-    .replace(/[^a-z0-9.]/g, "")
-    .replace(/\.+/g, ".")
-    .replace(/^\.|\.$/g, "")
-  if (!base) return `patient${Math.floor(Math.random() * 900 + 100)}`
-  const suffix = Math.floor(Math.random() * 90 + 10)
-  return `${base}${suffix}`
-}
-
-export function generatePortalPassword() {
-  const chars = "abcdefghjkmnpqrstuvwxyzABCDEFGHJKMNPQRSTUVWXYZ23456789"
-  let pwd = ""
-  for (let i = 0; i < 10; i++) pwd += chars[Math.floor(Math.random() * chars.length)]
-  return pwd
-}
-
-export function authenticatePatient(username: string, password: string) {
-  const uname = username.trim().toLowerCase()
-  return patients.find(
-    (p) => p.portalUsername?.toLowerCase() === uname && p.portalPassword === password
-  )
-}
-
 // CRUD helpers
 export function getPatient(id: string) {
   return patients.find((p) => p.id === id)
@@ -533,6 +418,7 @@ export function applyPatientTreatment(patientId: string, treatmentId: string) {
   if (!treatment) return undefined
 
   patients = patients.map((p) => (p.id === patientId ? { ...p, treatmentId } : p))
+  persistPatients()
 
   const invoice = ensureInvoiceForPatient(patientId)
   const cost = treatment.price
@@ -579,6 +465,7 @@ function syncPatientPaymentFromInvoices(patientId: string) {
   patients = patients.map((p) =>
     p.id === patientId ? { ...p, paymentStatus } : p
   )
+  persistPatients()
 }
 
 export function addPayment(
@@ -656,6 +543,7 @@ export function addHotel(data: Omit<Hotel, "id">) {
     patients = patients.map((p) =>
       p.id === hotel.patientId ? { ...p, hotelId: hotel.id } : p
     )
+    persistPatients()
   }
   return hotel
 }
@@ -676,6 +564,7 @@ export function updateHotel(id: string, data: Partial<Hotel>) {
       p.id === updated.patientId ? { ...p, hotelId: updated.id } : p
     )
   }
+  persistPatients()
   return updated
 }
 
@@ -686,10 +575,12 @@ export function deleteHotel(id: string) {
     patients = patients.map((p) =>
       p.id === hotel.patientId ? { ...p, hotelId: undefined } : p
     )
+    persistPatients()
   }
   appointments = appointments.map((a) =>
     a.hotelId === id ? { ...a, hotelId: undefined } : a
   )
+  persistAppointments()
 }
 
 export function addDriver(data: Omit<Driver, "id">) {
@@ -717,6 +608,8 @@ export function deleteDriver(id: string) {
   appointments = appointments.map((a) =>
     a.driverId === id ? { ...a, driverId: undefined } : a
   )
+  persistPatients()
+  persistAppointments()
 }
 
 export function addFlight(data: Omit<Flight, "id">) {
@@ -820,12 +713,14 @@ export function searchAll(query: string) {
 export function updateAppointmentStatus(id: string, status: Appointment["status"]) {
   const idx = appointments.findIndex((a) => a.id === id)
   if (idx >= 0) appointments[idx] = { ...appointments[idx], status }
+  persistAppointments()
 }
 
 export function addAppointment(data: Omit<Appointment, "id">) {
-  const id = `a${appointments.length + 1}`
+  const id = `a${Date.now()}`
   const appt = { ...data, id }
   appointments = [...appointments, appt]
+  persistAppointments()
   return appt
 }
 
@@ -834,18 +729,21 @@ export function updateAppointment(id: string, data: Partial<Appointment>) {
   if (idx < 0) return undefined
   const updated: Appointment = { ...appointments[idx], ...data, id }
   appointments = appointments.map((a) => (a.id === id ? updated : a))
+  persistAppointments()
   return updated
 }
 
 export function deleteAppointment(id: string) {
   appointments = appointments.filter((a) => a.id !== id)
   reminderLogs = reminderLogs.filter((r) => r.appointmentId !== id)
+  persistAppointments()
 }
 
 export function addPatient(data: Omit<Patient, "id">) {
-  const id = `p${patients.length + 1}`
+  const id = `p${Date.now()}`
   const patient = { ...data, id }
   patients = [...patients, patient]
+  persistPatients()
   return patient
 }
 
@@ -861,12 +759,15 @@ export function updatePatient(id: string, data: Partial<Patient>) {
       : patients[idx].nationalityFlag,
   }
   patients = patients.map((p) => (p.id === id ? updated : p))
+  persistPatients()
   return updated
 }
 
 export function deletePatient(id: string) {
   patients = patients.filter((p) => p.id !== id)
   appointments = appointments.filter((a) => a.patientId !== id)
+  persistPatients()
+  persistAppointments()
 }
 
 export function addDoctor(data: Omit<Doctor, "id">) {
@@ -892,6 +793,8 @@ export function deleteDoctor(id: string) {
   appointments = appointments.map((a) =>
     a.doctorId === id ? { ...a, doctorId: doctors[0]?.id ?? a.doctorId } : a
   )
+  persistPatients()
+  persistAppointments()
 }
 
 export function addTreatment(data: Omit<Treatment, "id">) {
@@ -914,6 +817,7 @@ export function updateTreatment(id: string, data: Partial<Treatment>) {
     appointments = appointments.map((a) =>
       a.treatmentId === id ? { ...a, duration: updated.duration } : a
     )
+    persistAppointments()
   }
   return updated
 }
@@ -931,6 +835,8 @@ export function deleteTreatment(id: string) {
         }
       : a
   )
+  persistPatients()
+  persistAppointments()
 }
 
 export function markNotificationRead(id: string) {
@@ -1346,6 +1252,57 @@ export function deleteClinicLogo(id: string) {
   }
   clinicSettings = { ...clinicSettings, logos }
   persistClinicSettings(clinicSettings)
+}
+
+const RAPPEL_NOTES_KEY = "dashboard-rappel-notes"
+
+function loadRappelNotes(): RappelNote[] {
+  try {
+    if (typeof localStorage !== "undefined") {
+      const raw = localStorage.getItem(RAPPEL_NOTES_KEY)
+      if (raw) return JSON.parse(raw) as RappelNote[]
+    }
+  } catch {
+    // ignore corrupt storage
+  }
+  return []
+}
+
+function persistRappelNotes(notes: RappelNote[]) {
+  try {
+    if (typeof localStorage !== "undefined") {
+      localStorage.setItem(RAPPEL_NOTES_KEY, JSON.stringify(notes))
+    }
+  } catch {
+    // ignore quota errors
+  }
+}
+
+export let rappelNotes: RappelNote[] = loadRappelNotes()
+
+export function getRappelNotes() {
+  return [...rappelNotes].sort((a, b) => a.date.localeCompare(b.date))
+}
+
+export function addRappelNote(data: Omit<RappelNote, "id" | "createdAt">) {
+  const note: RappelNote = { ...data, id: `rappel${Date.now()}`, createdAt: new Date().toISOString() }
+  rappelNotes = [...rappelNotes, note]
+  persistRappelNotes(rappelNotes)
+  return note
+}
+
+export function updateRappelNote(id: string, data: Partial<Omit<RappelNote, "id">>) {
+  const idx = rappelNotes.findIndex((n) => n.id === id)
+  if (idx < 0) return undefined
+  const updated: RappelNote = { ...rappelNotes[idx], ...data, id }
+  rappelNotes = rappelNotes.map((n) => (n.id === id ? updated : n))
+  persistRappelNotes(rappelNotes)
+  return updated
+}
+
+export function deleteRappelNote(id: string) {
+  rappelNotes = rappelNotes.filter((n) => n.id !== id)
+  persistRappelNotes(rappelNotes)
 }
 
 export function setDefaultClinicLogo(id: string) {

@@ -44,6 +44,6 @@ export function formatPaymentSummary(total: number, status: PaymentStatus, amoun
   return `tt ${total}dt — non payé`
 }
 
-export function delay(ms = 200) {
-  return new Promise((resolve) => setTimeout(resolve, ms))
+export function delay(_ms = 0) {
+  return Promise.resolve()
 }

@@ -6,15 +6,18 @@ import App from "./App"
 import { QueryProvider } from "./providers/QueryProvider"
 import { ThemeProvider } from "./providers/ThemeProvider"
 import { AppProvider } from "./providers/AppProvider"
+import { ErrorBoundary } from "./components/shared/ErrorBoundary"
 
 createRoot(document.getElementById("root")!).render(
   <StrictMode>
-    <ThemeProvider>
-      <QueryProvider>
-        <AppProvider>
-          <App />
-        </AppProvider>
-      </QueryProvider>
-    </ThemeProvider>
+    <ErrorBoundary>
+      <ThemeProvider>
+        <QueryProvider>
+          <AppProvider>
+            <App />
+          </AppProvider>
+        </QueryProvider>
+      </ThemeProvider>
+    </ErrorBoundary>
   </StrictMode>
 )

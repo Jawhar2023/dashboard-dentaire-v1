@@ -1,9 +1,10 @@
-import { useMemo } from "react"
+import { useMemo, useState } from "react"
 import { format, addDays, isToday, isTomorrow } from "date-fns"
 import { fr, enUS } from "date-fns/locale"
 import { useTranslation } from "react-i18next"
 import { ChevronLeft, ChevronRight, Pencil, Trash2, MessageSquare, Mail } from "lucide-react"
 import { Button } from "@/components/ui/button"
+import { Input } from "@/components/ui/input"
 import { AppointmentStatusSelect } from "@/components/appointments/AppointmentStatusSelect"
 import { AppointmentPaymentCell } from "@/components/appointments/AppointmentPaymentCell"
 import { getPatient, getDoctor, getTreatment } from "@/lib/mockDataStore"
@@ -52,10 +53,20 @@ export function AppointmentTableView({
 
   const handlePaymentChange = async (
     appt: Appointment,
-    data: { paymentStatus: PaymentStatus; amountPaid: number }
+    data: { paymentStatus: PaymentStatus; amountPaid: number; total?: number }
   ) => {
-    await updateAppointment.mutateAsync({ id: appt.id, data })
+    const { total, ...rest } = data
+    await updateAppointment.mutateAsync({
+      id: appt.id,
+      data: total !== undefined ? { ...rest, customPrice: total } : rest,
+    })
     toast.success("Payment updated")
+  }
+
+  const handleNotesChange = async (appt: Appointment, notes: string) => {
+    if (notes === (appt.notes ?? "")) return
+    await updateAppointment.mutateAsync({ id: appt.id, data: { notes } })
+    toast.success("Notes updated")
   }
 
   const days = useMemo(() => {
@@ -163,7 +174,6 @@ export function AppointmentTableView({
                         if (!patient || !doctor || !treatment) return null
 
                         const doctorShort = doctor.name.replace(/^Dr\.?\s*/i, "").split(" ").slice(-1)[0]
-                        const treatmentText = [treatment.name, appt.notes].filter(Boolean).join(" — ")
 
                         return (
                           <tr
@@ -184,11 +194,16 @@ export function AppointmentTableView({
                               {patient.firstName} {patient.lastName}
                             </td>
                             <td className="px-4 py-2 text-sm align-middle leading-snug">
-                              {treatmentText}
+                              <EditableTreatmentCell
+                                treatmentName={treatment.name}
+                                notes={appt.notes}
+                                disabled={updateAppointment.isPending}
+                                onCommit={(notes) => void handleNotesChange(appt, notes)}
+                              />
                             </td>
                             <td className="px-4 py-2 align-middle">
                               <AppointmentPaymentCell
-                                total={treatment.price}
+                                total={appt.customPrice ?? treatment.price}
                                 paymentStatus={appt.paymentStatus}
                                 amountPaid={appt.amountPaid}
                                 disabled={updateAppointment.isPending}
@@ -290,5 +305,58 @@ export function AppointmentTableView({
         ))}
       </div>
     </div>
+  )
+}
+
+interface EditableTreatmentCellProps {
+  treatmentName: string
+  notes?: string
+  disabled?: boolean
+  onCommit: (notes: string) => void
+}
+
+function EditableTreatmentCell({ treatmentName, notes, disabled, onCommit }: EditableTreatmentCellProps) {
+  const [editing, setEditing] = useState(false)
+  const [draft, setDraft] = useState(notes ?? "")
+
+  if (!editing) {
+    return (
+      <button
+        type="button"
+        disabled={disabled}
+        className="w-full text-left rounded-md px-1 py-0.5 -mx-1 hover:bg-muted/50 disabled:cursor-default"
+        onClick={() => {
+          setDraft(notes ?? "")
+          setEditing(true)
+        }}
+      >
+        {[treatmentName, notes].filter(Boolean).join(" — ")}
+      </button>
+    )
+  }
+
+  return (
+    <Input
+      autoFocus
+      className="h-8 text-sm"
+      value={draft}
+      placeholder="Notes…"
+      disabled={disabled}
+      onChange={(e) => setDraft(e.target.value)}
+      onBlur={() => {
+        onCommit(draft.trim())
+        setEditing(false)
+      }}
+      onKeyDown={(e) => {
+        if (e.key === "Enter") {
+          e.preventDefault()
+          onCommit(draft.trim())
+          setEditing(false)
+        }
+        if (e.key === "Escape") {
+          setEditing(false)
+        }
+      }}
+    />
   )
 }

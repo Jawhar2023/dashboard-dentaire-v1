@@ -11,8 +11,10 @@ const resources = {
         calendar: "Calendrier",
         doctors: "Médecins",
         treatments: "Traitements",
+        treatmentGlobale: "Traitement Globale",
         payments: "Paiements",
         invoices: "Factures",
+        rappel: "Rappel",
         settings: "Paramètres",
       },
       welcome: {
@@ -78,8 +80,10 @@ const resources = {
         calendar: "Calendar",
         doctors: "Doctors",
         treatments: "Treatments",
+        treatmentGlobale: "Global Treatment",
         payments: "Payments",
         invoices: "Invoices",
+        rappel: "Reminder",
         settings: "Settings",
       },
       welcome: {
